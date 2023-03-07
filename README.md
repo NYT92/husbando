@@ -26,7 +26,17 @@ husbando.pics is the place where people can upload fictional man/boy anime chara
 
 ## Deploying
 
-SOON
+- **Deploying frontend**  
+  
+  [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FNYT92%2Fhusbando%2Ffrontend&env=SECRET,USER,PASS,NUXT_TURNSTILE_SECRET_KEY,NUXT_TURNSTILE_SITE_KEY,API_URL,WEBSITE,FORMATE_URL,FORMATE_API_KEY&envDescription=These%20env%20data%20are%20required%20in%20order%20to%20make%20it%20work%20with%20the%20API%20and%20app.&envLink=https%3A%2F%2Fgithub.com%2FNYT92%2Fhusbando%2Fblob%2Fmain%2Ffrontend%2F.env.example)
+
+- **Deploying backend**  
+ 
+  [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FNYT92%2Fhusbando%2Fbackend&env=JWT_TOKEN,DETA_KEY,BUCKETNAME,ENDPOINT,ACCESSKEYID,SECRETACCESSKEY,SIGNATURE_VERSION&envDescription=This%20API%20required%20S3%20key%20and%20Deta%20in%20order%20to%20run.&envLink=https%3A%2F%2Fgithub.com%2FNYT92%2Fhusbando%2Fblob%2Fmain%2Fbackend%2F.env.example)
+
+- **Deploying both with Railway**
+ 
+  [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/cUDXYB?referralCode=SpsRaMStrmAffl)
 
 ## Credit
 
