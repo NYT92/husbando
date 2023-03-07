@@ -1,0 +1,28 @@
+{
+	"private": true,
+	"scripts": {
+		"build": "nuxt build",
+		"dev": "nuxt dev",
+		"generate": "nuxt generate",
+		"reset": "rm -rf .nuxt node_modules .output package-lock.json && npm install",
+		"preview": "nuxt preview",
+		"postinstall": "nuxt prepare"
+	},
+	"devDependencies": {
+		"@nuxt/content": "^2.4.3",
+		"@nuxtjs/google-fonts": "^3.0.0-1",
+		"@nuxtjs/turnstile": "^0.1.2",
+		"@sidebase/nuxt-auth": "^0.4.0-alpha.3",
+		"@types/jsonwebtoken": "^9.0.1",
+		"nuxt": "^3.0.0",
+		"nuxt-icon": "^0.1.8",
+		"sass": "^1.56.1",
+		"vuetify": "^3.1.7"
+	},
+	"dependencies": {
+		"axios": "^1.2.4",
+		"jsonwebtoken": "^9.0.0",
+		"vite-plugin-vuetify": "^1.0.1",
+		"vue3-easy-data-table": "^1.5.34"
+	}
+}
