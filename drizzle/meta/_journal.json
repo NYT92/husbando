@@ -1,0 +1,48 @@
+{
+  "version": "5",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1702648985077,
+      "tag": "0000_blue_wither",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1702649353613,
+      "tag": "0001_lush_moondragon",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1702649497728,
+      "tag": "0002_tearful_emma_frost",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1705213587929,
+      "tag": "0003_orange_earthquake",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1705214305644,
+      "tag": "0004_ambiguous_grandmaster",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1705214394462,
+      "tag": "0005_eminent_thing",
+      "breakpoints": true
+    }
+  ]
+}
