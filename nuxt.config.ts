@@ -39,6 +39,7 @@ export default defineNuxtConfig({
     accessKeyId: process.env.ACCESSKEYID,
     secretAccessKey: process.env.SECRETACCESSKEY,
     maxSizeMb: 15,
+    accept: "^image/(png|jpeg|jpg|webm|webp|gif)",
   },
   build: {
     transpile: ["uuid"],
