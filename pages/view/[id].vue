@@ -47,12 +47,14 @@ const revealSpoiler = () => {
 
 const setIcon = (url) => {
   if (url) {
-    if (url.includes("twitter")) return "i-tabler-brand-twitter";
+    if (url.includes("twitter") || url.includes("x"))
+      return "i-tabler-brand-twitter";
     if (url.includes("instagram")) return "i-tabler-brand-instagram";
     if (url.includes("facebook")) return "i-tabler-brand-facebook";
     if (url.includes("pixiv")) return "i-simple-icons-pixiv";
     if (url.includes("danbooru")) return "i-tabler-letter-d";
     if (url.includes("patreon")) return "i-tabler-brand-patreon";
+    if (url.includes("fanbox")) return "i-tabler-box";
     if (url.includes("tumblr")) return "i-tabler-brand-tumblr";
   }
   return "i-heroicons-link-20-solid";
@@ -77,32 +79,18 @@ const setIcon = (url) => {
         },
       }"
     >
-      <template #header>
-        <div class="flex items-center justify-between">
-          <h3
-            class="text-base font-semibold leading-6 text-gray-900 dark:text-white"
-          >
-            {{ data.id }}
-          </h3>
-          <UButton
-            color="gray"
-            variant="ghost"
-            icon="i-heroicons-x-mark-20-solid"
-            class="-my-1"
-            @click="viewBiggerImg = false"
-          />
-        </div>
-      </template>
-      <img
+      <UButton
+        color="gray"
+        variant="ghost"
+        icon="i-heroicons-x-mark-20-solid"
+        class="-my-1 absolute right-2 top-2"
         @click="viewBiggerImg = false"
-        :src="
-          useRuntimeConfig().public.IMAGE_OPTIMIZER_DOMAIN
-            ? `https://${useRuntimeConfig().public.IMAGE_OPTIMIZER_DOMAIN}/${
-                data.id
-              }.${data.file_extension}`
-            : data.url
-        "
+      />
+      <NuxtImg
+        @click="viewBiggerImg = false"
+        :src="data.url"
         :alt="data.id"
+        :quality="50"
       />
     </UCard>
   </UModal>
@@ -153,32 +141,22 @@ const setIcon = (url) => {
   </UModal>
   <div class="max-w-md mx-auto my-5 rounded-md shadow-xl bg-gray-800/60 p-4">
     <div v-if="!data.isNsfw">
-      <img
+      <NuxtImg
         @click="viewBiggerImg = true"
-        :src="
-          useRuntimeConfig().public.IMAGE_OPTIMIZER_DOMAIN
-            ? `https://${useRuntimeConfig().public.IMAGE_OPTIMIZER_DOMAIN}/${
-                data.id
-              }.${data.file_extension}`
-            : data.url
-        "
+        :src="data.url"
         :alt="data.id"
         class="w-full h-auto rounded-md mb-4"
+        :quality="50"
       />
     </div>
     <div v-else>
-      <img
+      <NuxtImg
         v-if="!splr"
         @click="viewBiggerImg = true"
-        :src="
-          useRuntimeConfig().public.IMAGE_OPTIMIZER_DOMAIN
-            ? `https://${useRuntimeConfig().public.IMAGE_OPTIMIZER_DOMAIN}/${
-                data.id
-              }.${data.file_extension}`
-            : data.url
-        "
+        :src="data.url"
         :alt="data.id"
         class="w-full h-auto rounded-md mb-4"
+        :quality="50"
       />
       <div class="spoiler-cover w-full h-[50vh]" @click="revealSpoiler">
         Click to reveal image
@@ -291,4 +269,7 @@ const setIcon = (url) => {
     </UButton>
   </div>
 </template>
-<style></style>
+<style>
+.spoiler-cover {
+}
+</style>

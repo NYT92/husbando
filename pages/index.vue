@@ -1,4 +1,6 @@
 <script setup>
+import { useStorage } from "@vueuse/core";
+
 useSeoMeta({
   title: "Home",
   description: "The best place to find your fictional husbando...",
@@ -19,26 +21,30 @@ useHead({
 });
 
 const route = useRoute();
-const data = ref({ results: [] });
+const data = ref({
+  results: [],
+});
 const offset = ref(0);
 const limit = 30;
 const isLoading = ref(false);
 const hasMoreData = ref(true);
-
+const selectedFilter = useStorage("filters");
+console.log(selectedFilter?.value);
 const fetchData = async () => {
   try {
     isLoading.value = true;
-    const newData = await $fetch(
-      `/api/list?offset=${offset.value}&limit=${limit}&show=${
-        route.query.show || "not_nsfw"
-      }`
-    );
+    const newData = await $fetch(`/api/list`, {
+      params: {
+        offset: offset.value,
+        limit: limit,
+        isNsfw: JSON.parse(selectedFilter?.value).isNsfw
+      },
+    });
 
     if (newData.results.length === 0) {
       hasMoreData.value = false;
       return;
     }
-
     data.value.results = [...data.value.results, ...newData.results];
     offset.value += limit;
   } catch (error) {
@@ -55,12 +61,22 @@ const fetchData = async () => {
   }
 };
 
+const handleScroll = () => {
+  if (
+    hasMoreData.value &&
+    window.innerHeight + window.scrollY >= document.body.offsetHeight - 100 &&
+    !isLoading.value
+  ) {
+    fetchData();
+  }
+};
+
 onMounted(() => {
   fetchData();
   window.addEventListener("scroll", handleScroll);
 
   watch(
-    () => route.query.show,
+    () => selectedFilter.value,
     () => {
       data.value.results = [];
       offset.value = 0;
@@ -73,68 +89,69 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener("scroll", handleScroll);
 });
-
-const handleScroll = () => {
-  if (
-    hasMoreData.value &&
-    window.innerHeight + window.scrollY >= document.body.offsetHeight - 100 &&
-    !isLoading.value
-  ) {
-    fetchData();
-  }
-};
 </script>
 
 <template>
-  <ClientOnly>
-    <div
-      style="
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-      "
-      v-if="isLoading"
-      class="loading"
-    >
-      <div>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          xmlns:xlink="http://www.w3.org/1999/xlink"
-          style="
-            margin: auto;
-            background: none;
-            display: block;
-            shape-rendering: auto;
-          "
-          width="100px"
-          height="100px"
-          viewBox="0 0 100 100"
-          preserveAspectRatio="xMidYMid"
-        >
-          <circle
-            cx="50"
-            cy="50"
-            fill="none"
-            stroke="#ff312d"
-            stroke-width="5"
-            r="32"
-            stroke-dasharray="150.79644737231007 52.26548245743669"
+  <main>
+    <ClientOnly>
+      <div
+        style="
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          z-index: 10;
+        "
+        v-if="isLoading"
+        class="loading"
+      >
+        <div>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            xmlns:xlink="http://www.w3.org/1999/xlink"
+            style="
+              margin: auto;
+              background: none;
+              display: block;
+              shape-rendering: auto;
+            "
+            width="100px"
+            height="100px"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="xMidYMid"
           >
-            <animateTransform
-              attributeName="transform"
-              type="rotate"
-              repeatCount="indefinite"
-              dur="1s"
-              values="0 50 50;360 50 50"
-              keyTimes="0;1"
-            ></animateTransform>
-          </circle>
-        </svg>
-
+            <circle
+              cx="50"
+              cy="50"
+              fill="none"
+              stroke="#ffffff"
+              stroke-width="5"
+              r="32"
+              stroke-dasharray="150.79644737231007 52.26548245743669"
+            >
+              <animateTransform
+                attributeName="transform"
+                type="rotate"
+                repeatCount="indefinite"
+                dur="1s"
+                values="0 50 50;360 50 50"
+                keyTimes="0;1"
+              ></animateTransform>
+            </circle>
+          </svg>
+        </div>
+      </div>
+      <div id="photos" class="pb-5">
+        <NuxtLink
+          v-for="image in data.results.filter((item) => item.public === true)"
+          :key="image"
+          :to="'/view/' + image.id.split('.')[0]"
+        >
+          <NuxtImg :src="image.url" :alt="image.id" :quality="50" />
+        </NuxtLink>
         <UButton
           v-if="hasMoreData"
-          @click="fetchData"
+          @click="fetchItems"
           color="gray"
           variant="ghost"
           class="w-full"
@@ -145,26 +162,8 @@ const handleScroll = () => {
           Load more?
         </UButton>
       </div>
-    </div>
-    <div id="photos" class="pb-5">
-      <NuxtLink
-        v-for="image in data.results.filter((item) => item.public === true)"
-        :key="image"
-        :to="'/view/' + image.id.split('.')[0]"
-      >
-        <img
-          :src="
-            useRuntimeConfig().public.IMAGE_OPTIMIZER_DOMAIN
-              ? `https://${useRuntimeConfig().public.IMAGE_OPTIMIZER_DOMAIN}/${
-                  image.id
-                }.${image.file_extension}`
-              : image.url
-          "
-          :alt="image.id"
-        />
-      </NuxtLink>
-    </div>
-  </ClientOnly>
+    </ClientOnly>
+  </main>
 </template>
 
 <style>
