@@ -2,10 +2,14 @@
 export default defineNuxtConfig({
   devtools: { enabled: true },
   css: ["~/assets/style.css"],
+
   runtimeConfig: {
     public: {
       cdnUrl: process.env.CDN_URL,
       IMAGE_OPTIMIZER_DOMAIN: process.env.IMAGE_OPTIMIZER_DOMAIN,
+      turnstile: {
+        siteKey: process.env.TURNSTILE_SITE_KEY,
+      },
     },
     jwt: process.env.JWT_TOKEN,
     credentials: {
@@ -24,16 +28,23 @@ export default defineNuxtConfig({
       url: process.env.TURSO_DB_URL,
       token: process.env.TURSO_DB_TOKEN,
     },
+    turnstile: {
+      secretKey: process.env.TURNSTILE_SECRET_KEY,
+    },
   },
+
   modules: [
     "@nuxt/ui",
     "@vueuse/nuxt",
-    "@nuxtjs/turnstile",
     "@sidebase/nuxt-auth",
+    "@nuxtjs/turnstile",
+    "@nuxt/image",
   ],
+
   build: {
     transpile: ["uuid"],
   },
+
   app: {
     head: {
       htmlAttrs: {
@@ -97,18 +108,36 @@ export default defineNuxtConfig({
       ],
     },
   },
-  turnstile: {
-    siteKey: process.env.TURNSTILE_SITE_KEY,
-    secretKey: process.env.TURNSTILE_SECRET_KEY,
-    addValidateEndpoint: true,
+
+  colorMode: {
+    preference: "dark",
   },
+
+  image: {
+    provider: process.env.IMAGE_OPTIMIZER_DOMAIN
+      ? "coollabsImage"
+      : "none",
+    providers: {
+      coollabsImage: {
+        provider: "~/providers/coollabsImage",
+        options: {
+          baseURL: process.env.IMAGE_OPTIMIZER_DOMAIN,
+        },
+      },
+    },
+  },
+
   auth: {
     baseURL: process.env.AUTH_ORIGIN,
+    provider: {
+      type: "authjs",
+    },
     session: {
       enableRefreshPeriodically: false,
       enableRefreshOnWindowFocus: false,
     },
   },
+
   routeRules: {
     "/api/list": {
       cors: true,
@@ -130,10 +159,23 @@ export default defineNuxtConfig({
         "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
       },
     },
-    "/": { prerender: true },
-    "/upload": { prerender: true },
+    "/": {
+      prerender: true,
+      appMiddleware: {
+        auth: false,
+      },
+    },
+    "/upload": {
+      prerender: true,
+      appMiddleware: {
+        auth: false,
+      },
+    },
   },
+
   experimental: {
     clientFallback: true,
   },
+
+  compatibilityDate: "2024-08-08",
 });
