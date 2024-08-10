@@ -1,20 +1,21 @@
 <script setup>
 useSeoMeta({
-  title: 'Dashboard',
-  description: 'The best place to find your fictional husbando...',
-})
+  title: "Dashboard",
+  description: "The best place to find your fictional husbando...",
+});
 
 useHead({
   htmlAttrs: {
-    lang: 'en'
+    lang: "en",
   },
-})
+});
 
 definePageMeta({ middleware: "auth" });
 
 const { signOut, status, data } = useAuth();
 const onsubmit = ref(false);
-const { data: h_data, refresh: refreshList } = await useFetch("/api/list?");
+const table_q = ref("");
+const editDialog = ref(false);
 
 const tab_items = [
   {
@@ -66,16 +67,58 @@ const items = (row) => [
     {
       label: "Delete",
       icon: "i-heroicons-trash-20-solid",
-      click: () => deleteImage(row.id),
+      click: () => deleteImage(row.id, row.file_extension),
     },
   ],
 ];
-
 const selectedColumns = ref(columns);
 const page = ref(1);
-const pageCount = 10;
-const table_q = ref("");
-const editDialog = ref(false);
+const pageCount = ref(20);
+const dataTable = ref({
+  offset: 0,
+  limit: 20,
+});
+
+let h_data = ref(null);
+
+async function fetchData(offset) {
+  const data = await $fetch("/api/list", {
+    params: {
+      offset: offset,
+      limit: dataTable.value.limit,
+    },
+    mode: "cors",
+    cache: "force-cache",
+  });
+  return data;
+}
+
+const pageFrom = computed(() => (page.value - 1) * pageCount.value + 1);
+const pageTo = computed(() =>
+  Math.min(page.value * pageCount.value, h_data.value.info.total)
+);
+
+watch(page, async (newPage) => {
+  dataTable.value.offset = (newPage - 1) * dataTable.value.limit;
+  h_data.value = await fetchData(dataTable.value.offset);
+});
+
+h_data.value = await fetchData(0);
+
+const filteredRows = computed(() => {
+  if (!h_data.value?.results) return [];
+
+  if (!table_q.value) {
+    return h_data.value.results;
+  }
+
+  return h_data.value.results.filter((data) => {
+    return Object.values(data).some((value) => {
+      return String(value).toLowerCase().includes(table_q.value.toLowerCase());
+    });
+  });
+});
+
 const currentData = reactive({
   selectedTags: [],
   source: "",
@@ -89,25 +132,6 @@ const currentData = reactive({
     height: "",
     uploaded_at: "",
   },
-});
-
-const filteredRows = computed(() => {
-  if (!table_q.value) {
-    return h_data.value.results.slice(
-      (page.value - 1) * pageCount,
-      page.value * pageCount
-    );
-  }
-
-  return h_data.value.results
-    .slice((page.value - 1) * pageCount, page.value * pageCount)
-    .filter((data) => {
-      return Object.values(data).some((value) => {
-        return String(value)
-          .toLowerCase()
-          .includes(table_q.value.toLowerCase());
-      });
-    });
 });
 
 const editMeta = (row) => {
@@ -131,7 +155,7 @@ const updateMeta = async () => {
   try {
     onsubmit.value = true;
     await useFetch(`/api/operation/update`, {
-      method: "POST",
+      method: "PUT",
       body: {
         id: currentData.info.id,
         tags: currentData.selectedTags,
@@ -142,7 +166,7 @@ const updateMeta = async () => {
     });
     alert("Updated!");
     editDialog.value = false;
-    onsubmit.value = false
+    onsubmit.value = false;
     refreshList();
   } catch (error) {
     alert("Something went wrong!");
@@ -150,21 +174,25 @@ const updateMeta = async () => {
   }
 };
 
-const deleteImage = async (id) => {
-  try {
-    await useFetch(`/api/operation/delete`, {
-      method: "POST",
-      body: {
-        id,
-      },
-    });
-    alert("Deleted!");
-    refreshList();
-  } catch (error) {
-    alert("Something went wrong!");
+const deleteImage = async (id, file_extension) => {
+  if (confirm("Are you sure you want to delete this image?")) {
+    try {
+      await useFetch(`/api/operation/delete`, {
+        method: "DELETE",
+        body: {
+          id,
+          file_extension,
+        },
+      });
+      alert("Deleted!");
+      refreshList();
+    } catch (error) {
+      alert("Something went wrong!");
+    }
   }
 };
 </script>
+
 <template>
   <UTabs :items="tab_items" class="w-full py-4 px-auto lg:px-4">
     <template #item="{ item }">
@@ -294,7 +322,8 @@ const deleteImage = async (id) => {
               placeholder="Columns"
             />
           </div>
-          <UTable :columns="selectedColumns" :rows="filteredRows">
+          <ClientOnly>
+            <UTable :columns="selectedColumns" :rows="filteredRows">
             <template #tags-data="{ row }">
               <div class="flex flex-row space-x-2">
                 <UBadge
@@ -321,15 +350,26 @@ const deleteImage = async (id) => {
               </UDropdown>
             </template>
           </UTable>
-          <div
-            class="flex justify-end px-3 py-3.5 border-t border-gray-200 dark:border-gray-700"
-          >
+          <UDivider class="my-4" />
+          <div class="flex flex-wrap justify-between items-center">
+            <div>
+              <span class="text-sm leading-5">
+                Showing
+                <span class="font-medium">{{ pageFrom }}</span>
+                to
+                <span class="font-medium">{{ pageTo }}</span>
+                of
+                <span class="font-medium">{{ h_data?.info?.total }}</span>
+                results
+              </span>
+            </div>
             <UPagination
               v-model="page"
               :page-count="pageCount"
               :total="h_data.info.total"
             />
           </div>
+          </ClientOnly>
         </UCard>
       </div>
       <div v-else-if="item.key === 'account'" class="space-y-3">
@@ -349,12 +389,12 @@ const deleteImage = async (id) => {
             />
             <div>
               <h3
-              class="text-base font-semibold leading-6 text-gray-900 dark:text-white"
-            >
-              User : {{ data.user.name }}
-            </h3>
-            <p>Status: {{ status }}</p>
-            <p>Expired in: {{ new Date(data.expires) }}</p>
+                class="text-base font-semibold leading-6 text-gray-900 dark:text-white"
+              >
+                User : {{ data.user.name }}
+              </h3>
+              <p>Status: {{ status }}</p>
+              <p>Expired in: {{ new Date(data.expires) }}</p>
             </div>
           </div>
           <template #footer>
