@@ -37,9 +37,19 @@
       </ul>
       <h1 class="text-2xl font-bold pb-2 mt-4">Support</h1>
       <p class="text-gray-200">
-        Husbando.pics is free for every yaoi or normal fan and providing high quality images. It would
-        be great if you support my project just to keep this website stay up and running forever.
+        Husbando.pics is free for every yaoi or normal fan and providing high
+        quality images. It would be great if you support my project just to keep
+        this website stay up and running forever.
       </p>
+      <UCard class="my-4">
+        <blockquote class="space-y-2 text-gray-200">
+          <i>
+            "Even though I am not a gay person or anything but I still love and
+            support also collectioning people artworks even Yaoi/Yuri arts
+            because it is my passion." - NYT92
+          </i>
+        </blockquote>
+      </UCard>
       <div class="flex">
         <UButton
           color="yellow"
@@ -83,7 +93,14 @@
       <div class="flex lg:flex-1">
         <NuxtLink to="/" class="-m-1.5 p-1.5">
           <span class="sr-only">Husbando.pics</span>
-          <h1 class="font-bold text-xl">Husbando.pics</h1>
+          <UTooltip :text="isJune() ? 'so gay...' : 'Home'">
+            <h1
+              class="font-bold text-xl"
+              :class="isJune() ? 'rainbow-text' : ''"
+            >
+              Husbando.pics
+            </h1>
+          </UTooltip>
         </NuxtLink>
       </div>
       <div class="flex lg:hidden">
@@ -113,19 +130,15 @@
           About
         </NuxtLink>
       </div>
-      <div class="hidden lg:flex lg:flex-1 lg:justify-end">
-        <UDropdown
-          :items="items"
-          mode="hover"
-          :popper="{ placement: 'bottom-start' }"
+      <div class="hidden lg:flex lg:flex-1 lg:justify-end gap-4">
+        <USelectMenu
+          v-model="selectedFilter"
+          @change="changeFilter"
+          :options="showNsfwOptions"
+          value-attribute="isNsfw"
+          option-attribute="label"
         >
-          <UButton
-            color="white"
-            variant="soft"
-            label="Filters"
-            trailing-icon="i-heroicons-chevron-down-20-solid"
-          />
-        </UDropdown>
+        </USelectMenu>
         <div class="flex items-center">
           <NuxtLink
             :to="`${status == 'authenticated' ? '/dashboard' : '/signin'}`"
@@ -142,7 +155,12 @@
         <div class="flex items-center justify-between">
           <NuxtLink to="/" class="-m-1.5 p-1.5">
             <span class="sr-only">Husbando.pics</span>
-            <h1 class="font-bold text-xl">Husbando.pics</h1>
+            <h1
+              class="font-bold text-xl"
+              :class="isJune() ? 'rainbow-text' : ''"
+            >
+              Husbando.pics
+            </h1>
           </NuxtLink>
           <button
             type="button"
@@ -176,24 +194,20 @@
               </NuxtLink>
             </div>
             <div class="py-6">
-              <NuxtLink
-                class="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-white hover:bg-gray-800"
-                to="/?show=sfw"
-              >
-                SFW
-              </NuxtLink>
-              <NuxtLink
-                class="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-white hover:bg-gray-800"
-                to="/?show=nsfw"
-              >
-                <span class="text-red-600">NSFW ⚠</span>
-              </NuxtLink>
-              <NuxtLink
-                class="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-white hover:bg-gray-800"
-                to="/?show=all"
-              >
-                <span class="text-green-600">All ⚠</span>
-              </NuxtLink>
+              <div class="my-2">
+                <span class="text-lg font-semibold leading-6 text-white">
+                  Filter:
+                </span>
+                <USelectMenu
+                  class="my-2"
+                  v-model="selectedFilter"
+                  @change="changeFilter"
+                  :options="showNsfwOptions"
+                  value-attribute="isNsfw"
+                  option-attribute="label"
+                  size="lg"
+                />
+              </div>
               <NuxtLink
                 :to="`${status == 'authenticated' ? '/dashboard' : '/signin'}`"
                 class="-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold leading-7 text-white hover:bg-gray-800"
@@ -213,52 +227,57 @@
   </div>
 </template>
 <script setup>
+import { useStorage } from "@vueuse/core";
+
 const { status } = useAuth();
 const aboutPage = ref(false);
-const route = useRoute();
 
-const items = [
-  [
-    {
-      label: "SFW",
-      icon: "i-heroicons-check-circle-20-solid",
-      to: "?show=sfw",
-      disabled: true,
-    },
-    {
-      label: "NSFW",
-      icon: "i-heroicons-exclamation-circle-20-solid",
-      to: "?show=nsfw",
-      disabled: false,
-    },
-    {
-      label: "All",
-      icon: "i-heroicons-information-circle-20-solid",
-      to: "?show=all",
-      disabled: false,
-    },
-  ],
+const filterState = useStorage("filters", {
+  label: "SFW",
+  isNsfw: "false",
+});
+
+const showNsfwOptions = [
+  {
+    label: "SFW",
+    isNsfw: "false",
+  },
+  {
+    label: "NSFW",
+    isNsfw: "true",
+  },
+  {
+    label: "All",
+    isNsfw: "all",
+  },
 ];
+
+const selectedFilter = ref(filterState?.value.isNsfw || "false");
+const changeFilter = () => {
+  filterState.value = showNsfwOptions.filter(
+    (option) => option.isNsfw == selectedFilter.value
+  )[0];
+};
+
 const mobileMenuOpen = ref(false);
 
-watchEffect(() => {
-  if (route.query.show) {
-    switch(route.query.show) {
-      case "nsfw":
-        items[0][0].disabled = false;
-        items[0][1].disabled = true;
-        items[0][2].disabled = false;
-        break;
-      case "all":
-        items[0][0].disabled = false;
-        items[0][1].disabled = false;
-        items[0][2].disabled = true;
-        break;
-      default:
-        items[0][0].disabled = true;
-        items[0][1].disabled = false;
-        items[0][2].disabled = false;
-    }
-  }
-});
+const isJune = () => {
+  const date = new Date();
+  return date.getMonth() == 5;
+};
 </script>
+<style>
+.rainbow-text {
+  background: linear-gradient(
+    90deg,
+    #c0382b,
+    #f39c19,
+    #f2c511,
+    #2ecc70,
+    #2980b9,
+    #8e43ad
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+</style>
