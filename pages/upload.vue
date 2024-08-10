@@ -53,6 +53,8 @@ const formData = ref({
   height: 0,
 });
 
+const fileSize = 1024 * 1024 * 15;
+
 const filteredHusbandoTags = computed(() => {
   return husbandoTags.sort().map((id) => ({
     value: id,
@@ -60,7 +62,16 @@ const filteredHusbandoTags = computed(() => {
   }));
 });
 
-const handleDragOver = () => {
+const showErrorModal = (message) => {
+  modalTitle.value = "Error";
+  modalContent.value = message;
+  openModal.value = true;
+  progressbar.value = 0;
+  loadingWhenUpload.value = false;
+};
+
+const handleDragOver = (event) => {
+  event.preventDefault();
   isDragging.value = true;
 };
 
@@ -69,120 +80,105 @@ const handleDragLeave = () => {
 };
 
 const handleDrop = (event) => {
+  event.preventDefault();
   isDragging.value = false;
-  handleFile(event.dataTransfer.files);
+  const files = event.dataTransfer.files;
+  if (files.length > 0) {
+    processFile(files[0]);
+  }
+};
+
+const handleFileUpload = (event) => {
+  const files = event.target.files;
+  if (files.length > 0) {
+    processFile(files[0]);
+  }
+};
+
+const processFile = async (recievefile) => {
+  if (
+    !/^image\/(png|jpeg|jpg|gif|webp|bmp|tiff|avif)$/.test(recievefile.type)
+  ) {
+    showErrorModal("Only images & gif files are allowed");
+    return false;
+  } else {
+    file.value = recievefile;
+    console.log(file.value);
+    if (file_extension(recievefile.name).includes("gif")) {
+      formData.value.selectedTags.push("gif");
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      imagePreview.value = reader.result;
+      const img = new Image();
+      img.onload = () => {
+        formData.value.width = img.width;
+        formData.value.height = img.height;
+        fd.append("width", img.width);
+        fd.append("height", img.height);
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(recievefile);
+  }
 };
 
 const handlePasteImage = async (event) => {
   const items = (event.clipboardData || event.originalEvent.clipboardData)
     .items;
-  for (const index in items) {
-    const item = items[index];
+  for (const item of items) {
     if (item.kind === "file") {
       const blob = item.getAsFile();
-      const reader = new FileReader();
-      reader.onload = () => {
-        imagePreview.value = reader.result;
-        const img = new Image();
-        img.onload = function () {
-          const width = img.width;
-          const height = img.height;
-          formData.width = width;
-          formData.height = height;
-          fd.append("width", width);
-          fd.append("height", height);
-        };
-        img.src = reader.result;
-      };
-      reader.readAsDataURL(blob);
-      file.value = blob;
-      if (file_extension(blob.name).includes("gif")) {
-        formData.selectedTags.push("gif");
+      if (blob) {
+        processFile(blob);
       }
     }
   }
 };
 
-const handleFileUpload = (event) => {
-  handleFile(event.target.files);
-  formData.value.file = event.target.files[0];
-};
-
-const handleFile = (files) => {
-  file.value = files[0];
-  if (file_extension(files[0].name).includes("gif")) {
-    formData.selectedTags.push("gif");
-  }
-  const reader = new FileReader();
-  reader.onload = () => {
-    imagePreview.value = reader.result;
-    const img = new Image();
-    img.onload = function () {
-      const width = img.width;
-      const height = img.height;
-      formData.value.width = width;
-      formData.value.height = height;
-      fd.append("width", width);
-      fd.append("height", height);
-    };
-    img.src = reader.result;
-  };
-  reader.readAsDataURL(file.value);
-
-  return files[0];
-};
-
 async function submitForm(event) {
   loadingWhenUpload.value = true;
 
-  const { data: cfResp } = await useFetch("/api/cfvalidation", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: {
-      token: cftsval.value,
-    },
-  });
-
   if (!file.value) {
-    modalTitle.value = "Error";
-    modalContent.value = "Please upload the file first";
-    openModal.value = true;
+    showErrorModal("Please upload the file first");
+    return false;
   }
 
-  if (file.value.size > 15728640) {
-    modalTitle.value = "Error";
-    modalContent.value = "File size is too big (Max 15MB)";
-    openModal.value = true;
+  if (!/^image\/(png|jpeg|jpg|gif|webp|bmp|tiff|avif)$/.test(file.value.type)) {
+    showErrorModal("Only images & gif files are allowed");
+    return false;
   }
 
-  if (formData.value.source.length > 0) {
-    if (!formData.value.source.includes("https://")) {
-      modalTitle.value = "Error";
-      modalContent.value = "Source must be a valid URL";
-      openModal.value = true;
-    }
+  if (file.value.size > fileSize) {
+    showErrorModal(`File size is too big (Max ${fileSize / 1024 / 1024}MB)`);
+    return false;
   }
 
-  if (!formData.value.selectedTags.length > 0) {
-    modalTitle.value = "Error";
-    modalContent.value = "Please select at least one tag";
-    openModal.value = true;
+  if (formData.value.source && !formData.value.source.includes("https://")) {
+    showErrorModal("Source must be a valid URL");
+    return false;
   }
 
-  if (!cfResp.value.success) {
-    modalTitle.value = "Error";
-    modalContent.value = "Captcha validation failed";
-    openModal.value = true;
-    loadingWhenUpload.value = false;
+  if (formData.value.selectedTags.length === 0) {
+    showErrorModal("Please select at least one tag");
+    return false;
   }
 
-  fd.append("file", formData.value.file);
+  fd.append("file", file.value);
   fd.append("source", formData.value.source);
   fd.append("isNsfw", formData.value.isNsfw);
   fd.append("public", formData.value.isPublic);
   fd.append("tags", formData.value.selectedTags.join(","));
+  fd.append("cfToken", cftsval.value);
+
+  useToast().add({
+    title: "Your image is being uploaded",
+    description: "Please wait till it's done",
+    type: "info",
+    duration: 3000,
+    position: "center",
+  });
 
   const { data, error } = await useFetch("/api/upload", {
     method: "POST",
@@ -190,11 +186,11 @@ async function submitForm(event) {
   });
 
   if (error.value || !data.value.success || !data.value) {
-    modalTitle.value = "Error";
-    modalContent.value = "Something went wrong.. Please try again";
-    openModal.value = true;
-    progressbar.value = 0;
     loadingWhenUpload.value = false;
+    showErrorModal(
+      data.value?.message || "Something went wrong.. Please try again"
+    );
+    progressbar.value = 0;
     fd.delete("file");
     fd.delete("source");
     fd.delete("isNsfw");
@@ -260,8 +256,8 @@ async function submitForm(event) {
               </li>
               <li>You can only upload up to 15MB of images or gifs.</li>
               <li>
-                Do not upload R-18 shota, illegal IRL media, meme, hate speech
-                and gore.
+                Do not upload (R-18 shota), AI, illegal IRL media, meme, comic
+                section and gore.
               </li>
               <li>
                 All images must be marked as NSFW if they contain as follows:
@@ -273,9 +269,7 @@ async function submitForm(event) {
                 <li>Lightsaber/Mosaic/Blur censorship</li>
               </ul>
               <li>
-                If your art have been upload here without permission, send us an
-                email at <UKbd size="md">husbando@skiff.com</UKbd> by attaching
-                image ID & Source and good reason for us to remove from the
+                If your art have been upload here without permission, click the report button and input the image ID & Source and good reason for us to remove from the
                 website.
               </li>
               <li>
