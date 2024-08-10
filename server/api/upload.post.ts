@@ -1,12 +1,14 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { z } from "zod";
+import { verifyTurnstileToken } from "#imports";
 import type { MultiPartData } from "h3";
 
 import { file_extension } from "../../utils";
 
-import { images, InsertImg } from "@/db/schema";
+import { images, info, InsertImg } from "@/db/schema";
 import { db } from "@/server/drizzle-service";
 import { customAlphabet } from "nanoid";
+import { eq, sql } from "drizzle-orm";
 
 export default defineEventHandler(async (event) => {
   try {
@@ -20,6 +22,7 @@ export default defineEventHandler(async (event) => {
 
     const bufferToString = (buffer: Buffer) => buffer.toString("utf-8");
     const file = form.find((item) => item.name === "file")?.data;
+    const cfToken = form.find((item) => item.name === "cfToken")?.data;
     const tags = form.find((item) => item.name === "tags")?.data
       ? // @ts-ignore
         bufferToString(form.find((item) => item.name === "tags").data)
@@ -90,6 +93,22 @@ export default defineEventHandler(async (event) => {
       };
     }
 
+    if (!cfToken) {
+      setResponseStatus(event, 400);
+      return {
+        success: false,
+        message: "token not found",
+      };
+    }
+
+    if (!verifyTurnstileToken(String(cfToken))) {
+      setResponseStatus(event, 400);
+      return {
+        success: false,
+        message: "token invalid",
+      };
+    }
+
     const s3Client = new S3Client({
       endpoint: useRuntimeConfig().r2.baseUrl,
       credentials: {
@@ -125,7 +144,10 @@ export default defineEventHandler(async (event) => {
       source: formData.source as string,
       file_extension: file_extension(fileInfo.name),
       url: genURL,
-      ip: getRequestIP(event) || "127.0.0.1",
+      ip: (event.node?.req?.headers["x-forwarded-for"] ||
+        event.node?.req?.headers["cf-connecting-ip"] ||
+        event.node?.req?.socket?.remoteAddress ||
+        "127.0.0.1") as unknown as string,
     };
 
     if (!parsedBody.safeParse(body).success) {
@@ -175,6 +197,10 @@ export default defineEventHandler(async (event) => {
     }
 
     await db.insert(images).values(body);
+    await db
+      .update(info)
+      .set({ totalUploads: sql`${info.totalUploads} + 1` })
+      .where(eq(info.key, "db_meta"));
 
     setResponseStatus(event, 200);
     return {
@@ -192,3 +218,4 @@ export default defineEventHandler(async (event) => {
     };
   }
 });
+
