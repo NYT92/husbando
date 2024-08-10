@@ -15,6 +15,13 @@ export const images = sqliteTable("images", {
   ip: text("ip"),
 });
 
+export const info = sqliteTable("info", {
+  key: text("key").primaryKey(),
+  totalUploads: integer("total_uploads").default(0),
+  disabledUploads: integer("disabled_uploads", { mode: "boolean" }),
+  accessIP: text("access_ip"),
+});
+
 export type Images = InferSelectModel<typeof images>;
 export type InsertImg = InferInsertModel<typeof images>;
 
