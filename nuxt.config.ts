@@ -7,9 +7,6 @@ export default defineNuxtConfig({
     public: {
       cdnUrl: process.env.CDN_URL,
       IMAGE_OPTIMIZER_DOMAIN: process.env.IMAGE_OPTIMIZER_DOMAIN,
-      turnstile: {
-        siteKey: process.env.TURNSTILE_SITE_KEY,
-      },
     },
     jwt: process.env.JWT_TOKEN,
     credentials: {
@@ -39,6 +36,7 @@ export default defineNuxtConfig({
     "@sidebase/nuxt-auth",
     "@nuxtjs/turnstile",
     "@nuxt/image",
+    "@nuxt/scripts",
   ],
 
   build: {
@@ -109,6 +107,10 @@ export default defineNuxtConfig({
     },
   },
 
+  turnstile: {
+    siteKey: process.env.TURNSTILE_SITE_KEY
+  },
+
   colorMode: {
     preference: "dark",
   },
@@ -177,5 +179,5 @@ export default defineNuxtConfig({
     clientFallback: true,
   },
 
-  compatibilityDate: "2024-08-08",
+  compatibilityDate: "2025-02-18",
 });
