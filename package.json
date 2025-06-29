@@ -18,7 +18,7 @@
     "@sidebase/nuxt-auth": "1.0.0",
     "@vueuse/nuxt": "^10.11.1",
     "css-select": "5.2.0",
-    "drizzle-kit": "^0.21.4",
+    "drizzle-kit": "^0.31.4",
     "next-auth": "~4.21.1",
     "nuxt": "^3.17.5",
     "nuxt-icon": "^0.6.10",
@@ -30,7 +30,7 @@
     "@aws-sdk/client-s3": "^3.839.0",
     "@libsql/client": "^0.4.3",
     "aws4fetch": "^1.0.20",
-    "drizzle-orm": "^0.29.5",
+    "drizzle-orm": "^0.44.2",
     "nanoid": "^5.1.5",
     "zod": "^3.25.67"
   }
