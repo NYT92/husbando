@@ -8,6 +8,7 @@ export default defineNuxtConfig({
       cdnUrl: process.env.CDN_URL,
       IMAGE_OPTIMIZER_DOMAIN: process.env.IMAGE_OPTIMIZER_DOMAIN,
     },
+    authOrigin: process.env.AUTH_ORIGIN,
     jwt: process.env.JWT_TOKEN,
     credentials: {
       username: process.env.AUTH_USERNAME,
@@ -17,8 +18,8 @@ export default defineNuxtConfig({
     r2: {
       bucketName: process.env.BUCKETNAME,
       baseUrl: process.env.ENDPOINT,
-      accessKey: process.env.SECRETACCESSKEY,
-      accessID: process.env.ACCESSKEYID,
+      secretAccessKey: process.env.SECRETACCESSKEY,
+      accessKeyId: process.env.ACCESSKEYID,
       signatureVersion: process.env.SIGNATURE_VERSION,
     },
     db: {
@@ -39,10 +40,6 @@ export default defineNuxtConfig({
     "@nuxt/scripts",
   ],
 
-  build: {
-    transpile: ["uuid"],
-  },
-
   app: {
     head: {
       htmlAttrs: {
@@ -54,52 +51,51 @@ export default defineNuxtConfig({
         { charset: "utf-8" },
         { name: "viewport", content: "width=device-width, initial-scale=1" },
         {
-          hid: "description",
           name: "description",
           content: "The best place to find your fictional husbando...",
         },
         {
-          hid: "og:title",
+          name: "og:title",
           property: "og:title",
           content: "Husbando.pics",
         },
         {
-          hid: "og:description",
+          name: "og:description",
           property: "og:description",
           content: "The best place to find your fictional husbando...",
         },
         {
-          hid: "og:image",
+          name: "og:image",
           property: "og:image",
           content: "/",
         },
         {
-          hid: "og:type",
+          name: "og:type",
           property: "og:type",
           content: "website",
         },
         {
-          hid: "og:url",
+          name: "og:url",
           property: "og:url",
           content: "",
         },
         {
-          hid: "twitter:card",
+          property: "twitter:card",
           name: "twitter:card",
           content: "summary_large_image",
         },
         {
-          hid: "twitter:title",
+          property: "twitter:title",
           name: "twitter:title",
           content: "Husbando.pics",
         },
         {
-          hid: "twitter:description",
+          property: "twitter:description",
           name: "twitter:description",
           content: "The best place to find your fictional husbando...",
         },
         {
-          hid: "twitter:image",
+          property: "twitter:image",
           name: "twitter:image",
           content: "/",
         },
@@ -108,7 +104,7 @@ export default defineNuxtConfig({
   },
 
   turnstile: {
-    siteKey: process.env.TURNSTILE_SITE_KEY
+    siteKey: process.env.TURNSTILE_SITE_KEY,
   },
 
   colorMode: {
@@ -116,9 +112,7 @@ export default defineNuxtConfig({
   },
 
   image: {
-    provider: process.env.IMAGE_OPTIMIZER_DOMAIN
-      ? "coollabsImage"
-      : "none",
+    provider: process.env.IMAGE_OPTIMIZER_DOMAIN ? "coollabsImage" : "none",
     providers: {
       coollabsImage: {
         provider: "~/providers/coollabsImage",
@@ -130,13 +124,19 @@ export default defineNuxtConfig({
   },
 
   auth: {
-    baseURL: process.env.AUTH_ORIGIN,
+    isEnabled: true,
+    disableServerSideAuth: false,
+    originEnvKey: "AUTH_ORIGIN",
     provider: {
       type: "authjs",
     },
-    session: {
-      enableRefreshPeriodically: false,
-      enableRefreshOnWindowFocus: false,
+    sessionRefresh: {
+      enablePeriodically: false,
+      enableOnWindowFocus: true,
+    },
+    globalAppMiddleware: {
+      isEnabled: false,
+      addDefaultCallbackUrl: true,
     },
   },
 
@@ -163,15 +163,9 @@ export default defineNuxtConfig({
     },
     "/": {
       prerender: true,
-      appMiddleware: {
-        auth: false,
-      },
     },
     "/upload": {
       prerender: true,
-      appMiddleware: {
-        auth: false,
-      },
     },
   },
 

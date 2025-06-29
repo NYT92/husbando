@@ -40,6 +40,7 @@ const ifImgDone = ref(false);
 const imgDataResp = ref();
 const turnstile = ref();
 const cftsval = ref();
+const ifUserAgree = ref(false);
 
 let fd = new FormData();
 
@@ -102,9 +103,29 @@ const processFile = async (recievefile) => {
     showErrorModal("Only images & gif files are allowed");
     return false;
   } else {
+    // Handle pasted images that don't have a name property
+    if (!recievefile.name) {
+      const extension = recievefile.type.split("/")[1] || "png";
+      const timestamp = Date.now();
+      // Create a new File object with a proper name
+      recievefile = new File(
+        [recievefile],
+        `pasted-image-${timestamp}.${extension}`,
+        {
+          type: recievefile.type,
+          lastModified: Date.now(),
+        }
+      );
+    }
+
     file.value = recievefile;
     console.log(file.value);
-    if (file_extension(recievefile.name).includes("gif")) {
+
+    // Check for GIF using MIME type instead of file extension for better reliability
+    if (
+      recievefile.type === "image/gif" ||
+      (recievefile.name && file_extension(recievefile.name).includes("gif"))
+    ) {
       formData.value.selectedTags.push("gif");
     }
 
@@ -240,51 +261,6 @@ async function submitForm(event) {
         <h1 class="font-bold text-2xl">
           Upload your husband picture {{ `:)` }}
         </h1>
-        <UAlert class="my-2" title="Upload Guidelines">
-          <template #description>
-            <p>
-              By using our services, you must comply with the guidelines such
-              as:
-            </p>
-            <ul
-              class="list-disc list-inside text-gray-200 flex flex-col gap-1 py-1"
-            >
-              <li>OBVIOUSLY DO NOT UPLOAD WAIFU IMAGE. (USE waifu.pics)</li>
-              <li>
-                Upload the art that are OK by artists as long as they ask you to
-                put credit or origin.
-              </li>
-              <li>You can only upload up to 15MB of images or gifs.</li>
-              <li>
-                Do not upload (R-18 shota), AI, illegal IRL media, meme, comic
-                section and gore.
-              </li>
-              <li>
-                All images must be marked as NSFW if they contain as follows:
-              </li>
-              <ul class="list-disc list-inside text-gray-200 ml-5">
-                <li>Naked body</li>
-                <li>Sex-related</li>
-                <li>Showing penis/asshole</li>
-                <li>Lightsaber/Mosaic/Blur censorship</li>
-              </ul>
-              <li>
-                If your art have been upload here without permission, click the report button and input the image ID & Source and good reason for us to remove from the
-                website.
-              </li>
-              <li>
-                You must include at least one tag when uploading. If there is no
-                tag that fit the image or gif, find an alternative or wait for
-                us to include more tag.
-              </li>
-            </ul>
-            <i>
-              If you don't follows any of these rules, you can get block by us
-              from using the services because each upload contain
-              <b>IP address</b> that we can use to track the origin.
-            </i>
-          </template>
-        </UAlert>
       </div>
       <UForm
         class="pb-10 gap-5 flex flex-col"
@@ -390,7 +366,7 @@ async function submitForm(event) {
           />
           <br />
           <span class="my-1" v-if="formData.isNsfw">
-            Make sure the image contained nudity
+            Make sure the image contained sex, nudity, gore, blood
           </span>
         </UFormGroup>
 
@@ -426,7 +402,76 @@ async function submitForm(event) {
           <NuxtTurnstile ref="turnstile" v-model="cftsval" />
         </UFormGroup>
 
+        <UFormGroup label="Notice" name="notice">
+          <UCard class="my-2" title="Upload Guidelines">
+            <p>
+              By using this website, you must comply with the guidelines such
+              as:
+            </p>
+            <ul
+              class="list-disc list-inside text-gray-200 flex flex-col gap-1 py-1"
+            >
+              <li>
+                OBVIOUSLY DO NOT UPLOAD WAIFU IMAGE. (USE
+                <a href="https://waifu.pics" target="_blank"> waifu.pics </a>
+                instead)
+              </li>
+              <li>
+                Upload the art that are OK by artists as long as they ask you to
+                put credit or origin. Help report if you know the origin of the
+                art so we can put the credit.
+              </li>
+              <li>
+                You can only upload up to 15MB of images or gifs. (We encourage
+                to upload high quality images)
+              </li>
+              <li>
+                Do not upload R-18 shota, extreamly gore art, AI, real life
+                media/gore, meme, comic/manga/manhwa/manhua/doujinshi section.
+                Anime is allowed if the image containing one or more male
+                characters in high quality.
+              </li>
+              <li>
+                All images must be marked as NSFW if they contain as follows:
+              </li>
+              <ul class="list-disc list-inside text-gray-200 ml-5">
+                <li>Naked body</li>
+                <li>Sex-related</li>
+                <li>Showing penis/asshole</li>
+                <li>Lightsaber/Mosaic/Blur/Blackbar censorship</li>
+                <li>Blood or Gore</li>
+              </ul>
+              <li>
+                If your art have been upload here without permission, click the
+                report button and input the image ID & Source and good reason
+                for us to remove from the website.
+              </li>
+              <li>
+                You must include at least one tag when uploading. If there is no
+                tag that fit the image or gif, find an alternative or wait for
+                us to include more tag.
+              </li>
+            </ul>
+            <i>
+              If you don't follows any of these rules, you can get your image
+              deleted by us or in extreme case block by us from using the
+              services because each upload contain
+              <b>IP address</b> that we can use to track the origin.
+            </i>
+          </UCard>
+        </UFormGroup>
+
+        <UFormGroup name="agree" required="">
+          <UCheckbox
+            v-model="ifUserAgree"
+            :disabled="loadingWhenUpload"
+            required=""
+            label="I agree to the guidelines!"
+          />
+        </UFormGroup>
+
         <UButton
+          :disabled="!ifUserAgree"
           size="xl"
           icon="i-heroicons-arrow-small-right"
           type="submit"
@@ -465,6 +510,7 @@ async function submitForm(event) {
             <UButton
               to="/upload"
               :external="true"
+              target="_blank"
               color="red"
               icon="i-tabler-arrow-back-up"
               href="/upload"

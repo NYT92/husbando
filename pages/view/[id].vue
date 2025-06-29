@@ -47,7 +47,7 @@ const revealSpoiler = () => {
 
 const setIcon = (url) => {
   if (url) {
-    if (url.includes("twitter") || url.includes("x"))
+    if (url.includes("twitter") || url.includes("x.com"))
       return "i-tabler-brand-twitter";
     if (url.includes("instagram")) return "i-tabler-brand-instagram";
     if (url.includes("facebook")) return "i-tabler-brand-facebook";

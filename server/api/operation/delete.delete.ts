@@ -30,8 +30,8 @@ export default defineEventHandler(async (event) => {
     const s3Client = new S3Client({
       endpoint: useRuntimeConfig().r2.baseUrl,
       credentials: {
-        accessKeyId: useRuntimeConfig().r2.accessID,
-        secretAccessKey: useRuntimeConfig().r2.accessKey,
+        accessKeyId: useRuntimeConfig().r2.accessKeyId,
+        secretAccessKey: useRuntimeConfig().r2.secretAccessKey,
       },
       region: "auto",
     });

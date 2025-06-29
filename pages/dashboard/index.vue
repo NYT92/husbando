@@ -10,7 +10,7 @@ useHead({
   },
 });
 
-definePageMeta({ middleware: "auth" });
+definePageMeta({ middleware: "sidebase-auth" });
 
 const { signOut, status, data } = useAuth();
 const onsubmit = ref(false);
@@ -81,17 +81,21 @@ const dataTable = ref({
 
 let h_data = ref(null);
 
-async function fetchData(offset) {
+async function fetchData(offset, cache = "force-cache") {
   const data = await $fetch("/api/list", {
     params: {
       offset: offset,
       limit: dataTable.value.limit,
     },
     mode: "cors",
-    cache: "force-cache",
+    cache,
   });
   return data;
 }
+
+const refreshList = async () => {
+  h_data.value = await fetchData(0, "default");
+};
 
 const pageFrom = computed(() => (page.value - 1) * pageCount.value + 1);
 const pageTo = computed(() =>
@@ -321,6 +325,16 @@ const deleteImage = async (id, file_extension) => {
               multiple
               placeholder="Columns"
             />
+            <div>
+              <UButton
+                size="xl"
+                icon="i-heroicons-arrow-path-rounded-square"
+                type="submit"
+                @click="refreshList"
+              >
+                Reload
+              </UButton>
+            </div>
           </div>
           <ClientOnly>
             <UTable :columns="selectedColumns" :rows="filteredRows">

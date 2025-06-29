@@ -45,15 +45,33 @@ const validate = (state: any): FormError[] => {
 async function onSubmit(event: FormSubmitEvent<any>) {
   console.log(event.data);
   try {
-    await signIn("credentials", {
+    const result = await signIn("credentials", {
       username: state.username,
       password: state.password,
       accesscode: state.code,
       redirect: false,
     });
-    return navigateTo("/dashboard", { external: true });
+    
+    // Handle the new SignInResult return type from v1.0
+    if (result.ok && result.error === null) {
+      return navigateTo("/dashboard", { external: true });
+    } else {
+      // Handle authentication error
+      authAlert.value = {
+        title: "Authentication Failed",
+        description: result.error || "Invalid credentials provided",
+        color: "red",
+        isTrue: true,
+      };
+    }
   } catch (e) {
     console.log(e);
+    authAlert.value = {
+      title: "Error",
+      description: "An unexpected error occurred during sign in",
+      color: "red",
+      isTrue: true,
+    };
   }
 }
 const query = useRoute().query;
