@@ -17,6 +17,7 @@
     "@nuxtjs/turnstile": "^1.0.0",
     "@sidebase/nuxt-auth": "1.0.0",
     "@vueuse/nuxt": "^10.11.1",
+    "css-select": "5.2.0",
     "drizzle-kit": "^0.21.4",
     "next-auth": "~4.21.1",
     "nuxt": "^3.17.5",
